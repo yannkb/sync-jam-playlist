@@ -41,7 +41,7 @@ def get_optimal_config() -> Tuple[int, int, int]:
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode == 0:
-        total_videos = int(result.stdout.strip())
+        total_videos = int(result.stdout.splitlines()[0])
         segment_size = min(200, max(100, total_videos // (workers * 2)))
     else:
         print("❌ Error: Could not fetch playlist size. Using defaults.")
