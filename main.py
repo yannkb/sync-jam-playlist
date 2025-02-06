@@ -12,7 +12,7 @@ PLAYLIST_URL = (
 )
 DOWNLOAD_PATH = "audio_downloads"
 METADATA_FILE = os.path.join(DOWNLOAD_PATH, "playlist_metadata.json")
-CONCURRENT_FRAGMENTS = 8
+CONCURRENT_FRAGMENTS = "8"
 
 
 os.makedirs(DOWNLOAD_PATH, exist_ok=True)
@@ -132,16 +132,20 @@ def save_metadata(metadata):
 
 
 def get_existing_files():
-    """Get a set of downloaded audio files (without extensions)."""
-    return {
-        os.path.splitext(f)[0] for f in os.listdir(DOWNLOAD_PATH) if f.endswith(".mp3")
-    }
+    """Get a set of downloaded audio files (by ID)."""
+    existing_files = set()
+    for f in os.listdir(DOWNLOAD_PATH):
+        if f.endswith(".mp3"):
+            # Extract the ID from the filename (assuming format "Title - ID.mp3")
+            video_id = f.split(" - ")[-1].replace(".mp3", "")
+            existing_files.add(video_id)
+    return existing_files
 
 
 def download_audio(entry):
     """Downloads a single audio file using yt-dlp."""
     video_id = entry["id"]
-    output_path = os.path.join(DOWNLOAD_PATH, "%(id)s.%(ext)s")
+    output_path = os.path.join(DOWNLOAD_PATH, "%(title)s - %(id)s.%(ext)s")
 
     if not isinstance(output_path, str):
         print("Error: output_path is not a string")
