@@ -5,6 +5,10 @@ import concurrent.futures
 from typing import Optional, Dict, List, Tuple
 import math
 import psutil
+from mutagen.easyid3 import EasyID3
+from mutagen.mp3 import MP3
+from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB
+
 
 # Configuration
 PLAYLIST_URL = (
@@ -162,9 +166,16 @@ def download_audio(entry):
         "--extract-audio",
         "--audio-format",
         "mp3",
+        "--embed-metadata",  # Add basic metadata
+        "--embed-thumbnail",  # Add thumbnail as cover art
+        "--parse-metadata",
+        "%(uploader)s:%(meta_artist)s",  # Set video uploader as artist
+        "--parse-metadata",
+        "%(title)s:%(meta_title)s",  # Set video title as track title
+        "--add-metadata",  # Ensure metadata is written to the file
         "--concurrent-fragments",
-        CONCURRENT_FRAGMENTS,  # Speeds up individual downloads
-        "--no-progress",  # Hide cluttered output
+        CONCURRENT_FRAGMENTS,
+        "--no-progress",
         "-o",
         output_path,
         entry["url"],
@@ -175,6 +186,13 @@ def download_audio(entry):
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode == 0:
+        filepath = os.path.join(DOWNLOAD_PATH, f"{entry['title']} - {video_id}.mp3")
+        update_metadata(
+            filepath,
+            title=entry["title"],
+            artist=entry.get("uploader", "Unknown"),
+            album=entry.get("playlist_title", "YouTube Playlist"),
+        )
         print(f"✔ Downloaded: {entry['title']}")
         return video_id
     else:
@@ -198,6 +216,27 @@ def parallel_download(playlist_data, existing_files):
         results = list(executor.map(download_audio, to_download))
 
     return [r for r in results if r]
+
+
+def update_metadata(filepath, title, artist, album=None):
+    """Update MP3 metadata after download."""
+    try:
+        audio = MP3(filepath, ID3=ID3)
+
+        # Create ID3 tag if it doesn't exist
+        if not audio.tags:
+            audio.add_tags()
+
+        # Set the metadata
+        audio.tags.add(TIT2(encoding=3, text=title))
+        audio.tags.add(TPE1(encoding=3, text=artist))
+        if album:
+            audio.tags.add(TALB(encoding=3, text=album))
+
+        audio.save()
+        print(f"Updated metadata for: {filepath}")
+    except Exception as e:
+        print(f"Error updating metadata: {e}")
 
 
 def sync_playlist():
