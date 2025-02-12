@@ -14,7 +14,7 @@ from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB
 PLAYLIST_URL = (
     "https://www.youtube.com/playlist?list=PLn9b2rpdRYi7gNmL_I_fGdfm5HnQeLCE-"
 )
-DOWNLOAD_PATH = "audio_downloads"
+DOWNLOAD_PATH = "/home/yann/Work/sync-jam-playlist/audio_downloads"
 METADATA_FILE = os.path.join(DOWNLOAD_PATH, "playlist_metadata.json")
 CONCURRENT_FRAGMENTS = "8"
 
